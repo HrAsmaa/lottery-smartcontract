@@ -71,18 +71,18 @@ def test_can_endLottery_after_start():
   lottery.endLottery({"from": account})
   assert lottery.lottery_state() == 2
 
-def test_cant_endLottery_before_start():
+def test_onlyOwner_can_endLottery():
   if network.show_active() not in LOCAL_BLOCKCHAIN_ENV:
     pytest.skip()
   account = get_account()
   deploy_lottery()
   lottery = Lottery[-1]
   fund_with_link(lottery.address)
-  tx = lottery.endLottery({"from": account})
-  request_id = tx.events["RequestRandomness"]["requestId"]
-  RANDOM_NUM = 777
+  lottery.startLottery({"from": account})
+  value = lottery.getEntrenceFee() +100000000
+  lottery.enter({"from": account, "value": value})
   with pytest.raises(exceptions.VirtualMachineError):
-    get_contract("vrf_coordinator").callBackWithRandomness(request_id, RANDOM_NUM, lottery.address, {"from": account})
+    lottery.endLottery({"from": get_account(index=1)})
 
 def test_pick_winner_correctly():
   if network.show_active() not in LOCAL_BLOCKCHAIN_ENV:
